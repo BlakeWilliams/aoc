@@ -33,48 +33,48 @@ func NewReport(line string) Report {
 }
 
 func (r *Report) Safe() bool {
-	return checkLevels(r.levels, false)
+	res, _ := checkLevels(r.levels)
+	return res
 }
 
 func (r *Report) MostlySafe() bool {
-	return checkLevels(r.levels, true)
+	res, failedIndex := checkLevels(r.levels)
+	if res {
+		return true
+	}
+
+	if failedIndex == 2 {
+		if res, _ := checkLevels(slices.Delete(slices.Clone(r.levels), 0, 1)); res {
+			return true
+		}
+	}
+	if res, _ := checkLevels(slices.Delete(slices.Clone(r.levels), failedIndex-1, failedIndex)); res {
+		return true
+	}
+	if res, _ := checkLevels(slices.Delete(slices.Clone(r.levels), failedIndex, failedIndex+1)); res {
+		return true
+	}
+
+	return false
 }
 
-func checkLevels(levels []int, singleException bool) bool {
+func checkLevels(levels []int) (bool, int) {
 	last := levels[0]
 	desc := levels[0] > levels[1]
 
 	for i, level := range levels[1:] {
 		diff := last - level
-		safe := true
 
 		if desc && (diff < 1 || diff > 3) {
-			safe = false
+			return false, i + 1
 		} else if !desc && (diff > -1 || diff < -3) {
-			safe = false
-		}
-
-		if !safe && singleException {
-			n := i + 1
-
-			pre := slices.Delete(slices.Clone(levels), n, n+1)
-			post := slices.Delete(slices.Clone(levels), n-1, n)
-			firstRes := false
-
-			// edge case: handle removing the first element
-			if n == 2 {
-				firstRes = checkLevels(slices.Delete(slices.Clone(levels), 0, 1), false)
-			}
-
-			return firstRes || checkLevels(pre, false) || checkLevels(post, false)
-		} else if !safe {
-			return false
+			return false, i + 1
 		}
 
 		last = level
 	}
 
-	return true
+	return true, 0
 }
 
 func main() {
