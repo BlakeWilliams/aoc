@@ -46,4 +46,23 @@ func main() {
 	}
 
 	fmt.Printf("Distance: %d\n", distance)
+
+	// part 2
+	counts := make(map[int]int)
+	for _, v := range right {
+		if _, ok := counts[v]; !ok {
+			counts[v] = 0
+		}
+
+		counts[v]++
+	}
+
+	similarity := 0
+	for _, v := range left {
+		if count, ok := counts[v]; ok {
+			similarity += v * count
+		}
+	}
+
+	fmt.Printf("Similarity: %d\n", similarity)
 }
