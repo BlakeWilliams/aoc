@@ -12,14 +12,19 @@ var input string
 type Coord = [2]int
 
 var offsets = [][]Coord{
-	{{0, 1}, {0, 2}, {0, 3}},
-	{{0, -1}, {0, -2}, {0, -3}},
-	{{1, 1}, {2, 2}, {3, 3}},
-	{{1, -1}, {2, -2}, {3, -3}},
-	{{-1, -1}, {-2, -2}, {-3, -3}},
-	{{-1, 1}, {-2, 2}, {-3, 3}},
-	{{-1, 0}, {-2, 0}, {-3, 0}},
-	{{1, 0}, {2, 0}, {3, 0}},
+	{{0, 0}, {0, 1}, {0, 2}, {0, 3}},
+	{{0, 0}, {0, -1}, {0, -2}, {0, -3}},
+	{{0, 0}, {1, 1}, {2, 2}, {3, 3}},
+	{{0, 0}, {1, -1}, {2, -2}, {3, -3}},
+	{{0, 0}, {-1, -1}, {-2, -2}, {-3, -3}},
+	{{0, 0}, {-1, 1}, {-2, 2}, {-3, 3}},
+	{{0, 0}, {-1, 0}, {-2, 0}, {-3, 0}},
+	{{0, 0}, {1, 0}, {2, 0}, {3, 0}},
+}
+
+var masOffsets = [][]Coord{
+	{{1, 1}, {0, 0}, {-1, -1}},
+	{{1, -1}, {0, 0}, {-1, 1}},
 }
 
 func main() {
@@ -37,7 +42,7 @@ func main() {
 				continue
 			}
 
-			for _, word := range getWords(chart, y, x) {
+			for _, word := range getWords(chart, offsets, y, x) {
 				if word == "XMAS" {
 					xmasCount++
 				}
@@ -46,9 +51,32 @@ func main() {
 	}
 
 	fmt.Printf("XMAS: %d\n", xmasCount)
+
+	masCount := 0
+	for y, line := range chart {
+	chars:
+		for x, char := range line {
+			if char != "A" {
+				continue
+			}
+			words := getWords(chart, masOffsets, y, x)
+			if len(words) != 2 {
+				continue
+			}
+
+			for _, word := range words {
+				if word != "MAS" && word != "SAM" {
+					continue chars
+				}
+			}
+			masCount++
+		}
+	}
+
+	fmt.Printf("MAS: %d\n", masCount)
 }
 
-func getWords(chart [][]string, startY, startX int) []string {
+func getWords(chart [][]string, offsets [][]Coord, startY, startX int) []string {
 	height := len(chart)
 	width := len(chart[0])
 
@@ -57,7 +85,6 @@ func getWords(chart [][]string, startY, startX int) []string {
 offsets:
 	for _, offset := range offsets {
 		var word strings.Builder
-		word.WriteString(chart[startY][startX])
 
 		for _, coord := range offset {
 			y := startY - coord[0]
