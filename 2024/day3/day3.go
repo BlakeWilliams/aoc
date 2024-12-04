@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var mulRegex = regexp.MustCompile(`mul\((\d+,\d+)\)|don't\(\)|do\(\)`)
+var mulRegex = regexp.MustCompile(`mul\((\d{1,3},\d{1,3})\)|don't\(\)|do\(\)`)
 
 //go:embed input
 var input string
