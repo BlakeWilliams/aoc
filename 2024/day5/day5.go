@@ -3,6 +3,7 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -36,6 +37,11 @@ func main() {
 		ruleLookup[left] = append(ruleLookup[left], right)
 	}
 
+	fmt.Printf("Sum: %d\n", part1(updates, ruleLookup))
+	fmt.Printf("Updated sum: %d\n", part2(updates, ruleLookup))
+}
+
+func part1(updates []string, ruleLookup map[int][]int) int {
 	sum := 0
 updates:
 	for _, update := range updates {
@@ -60,7 +66,54 @@ updates:
 		sum += mid
 	}
 
-	fmt.Printf("Sum: %d\n", sum)
+	return sum
+}
+
+func part2(updates []string, ruleLookup map[int][]int) int {
+	sum := 0
+updates:
+	for _, update := range updates {
+		values := updateToInts(update)
+
+		for i := len(values) - 1; i >= 0; i-- {
+			rules, ok := ruleLookup[values[i]]
+			if !ok {
+				continue
+			}
+
+			for n := i; n >= 0; n-- {
+				for _, rule := range rules {
+					if values[n] == rule {
+						correctOrder(values, ruleLookup)
+
+						mid := values[len(values)/2]
+						sum += mid
+						continue updates
+					}
+				}
+			}
+		}
+
+	}
+
+	return sum
+}
+
+func correctOrder(values []int, ruleLookup map[int][]int) {
+outer:
+	for i := 0; i < len(values); i++ {
+		rules, ok := ruleLookup[values[i]]
+		if !ok {
+			continue
+		}
+		for _, rule := range rules {
+			if n := slices.Index(values, rule); n != -1 && n > i {
+				values[i], values[n] = values[n], values[i]
+				i = -1
+				continue outer
+			}
+		}
+	}
 }
 
 func updateToInts(s string) []int {
