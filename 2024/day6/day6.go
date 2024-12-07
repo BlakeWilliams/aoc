@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -25,13 +26,16 @@ type Map struct {
 	visited   map[Coord]struct{}
 	guard     Coord
 	direction Direction
+	obstacles []Coord
 }
 
-func (m *Map) Walk() {
+var ErrLoop = errors.New("hell yeah")
+
+func (m *Map) Walk() error {
 	for {
 		next, obstacle, inBounds := m.NextStep()
 		if !inBounds {
-			return
+			return nil
 		}
 
 		switch obstacle {
@@ -48,6 +52,37 @@ func (m *Map) Walk() {
 				m.direction = DirUp
 			}
 
+			m.obstacles = append(m.obstacles, next)
+
+			repeatSize := 0
+			for i := 3; i < len(m.obstacles); i++ {
+				comp := m.obstacles[len(m.obstacles)-i]
+				if comp[0] == next[0] && comp[1] == next[1] {
+					repeatSize = i - 1
+					break
+				}
+			}
+
+			if repeatSize == 0 {
+				continue
+			}
+
+			if len(m.obstacles) < repeatSize*12 {
+				continue
+			}
+
+			loop := true
+			for i := 0; i < repeatSize; i++ {
+				end := len(m.obstacles) - 1
+				if m.obstacles[end-i] != m.obstacles[end-i-repeatSize] {
+					loop = false
+					break
+				}
+			}
+
+			if loop {
+				return ErrLoop
+			}
 			continue
 		}
 		m.guard = next
@@ -86,7 +121,27 @@ func main() {
 		m.grid = append(m.grid, positions)
 	}
 
-	m.Walk()
+	loops := 0
+	origGuard := Coord{m.guard[0], m.guard[1]}
+	iter := 0
+	for y := 0; y < len(m.grid)-1; y++ {
+		for x := 0; x <= len(m.grid[0])-1; x++ {
+			iter++
+			m.obstacles = []Coord{}
+			m.visited = map[Coord]struct{}{m.guard: {}}
+			m.guard[0], m.guard[1] = origGuard[0], origGuard[1]
+			m.direction = DirUp
 
-	fmt.Println(len(m.visited))
+			origItem := m.grid[y][x]
+			m.grid[y][x] = '#'
+
+			if err := m.Walk(); err == ErrLoop {
+				loops++
+			}
+
+			m.grid[y][x] = origItem
+		}
+	}
+
+	fmt.Println(loops)
 }
